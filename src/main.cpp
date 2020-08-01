@@ -22,6 +22,7 @@ const char* garage_door_2_state_topic;
 const char* garage_door_1_command_topic;
 //Garage door 2 state (1=open, 0=close)
 const char* garage_door_2_command_topic;
+const char* reset_topic;
 
 static const uint8_t GARAGE_DOOR_1_COMMAND_PIN=D1;
 static const uint8_t GARAGE_DOOR_2_COMMAND_PIN=D2;
@@ -91,6 +92,11 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.println("] ");
+  if(strcmp(topic, reset_topic) == 0) {
+    WiFi.disconnect(true);
+    ESP.reset();
+    delay(5000);
+  }
   
   if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
     uint8_t new_ideal_state = payload[0]-'0';
@@ -228,6 +234,7 @@ void readConfigsFromFileSystem() {
           garage_door_2_state_topic = (new String(monitor_name_string + "/garage_door_2/state"))->c_str();
           garage_door_1_command_topic = (new String(monitor_name_string + "/garage_door_1/command"))->c_str();
           garage_door_2_command_topic = (new String(monitor_name_string + "/garage_door_2/command"))->c_str();
+          reset_topic = (new String(monitor_name_string + "/reset"))->c_str();
         } else {
           Serial.println("failed to load json config");
         }
@@ -267,6 +274,7 @@ void reconnect() {
       Serial.println("connected");
       mqtt_client.subscribe(garage_door_1_command_topic);
       mqtt_client.subscribe(garage_door_2_command_topic);
+      mqtt_client.subscribe(reset_topic);
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqtt_client.state());
