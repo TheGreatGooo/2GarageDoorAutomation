@@ -7,9 +7,9 @@
 #include <PubSubClient.h>
 
 //define your default values here, if there are different values in config.json, they are overwritten.
-char monitor_name[40] = "EnergyMonitor";
+char monitor_name[40] = "GarageDoorAutomation";
 char mqtt_server[40];
-char mqtt_port[6] = "8080";
+char mqtt_port[6] = "1883";
 
 //topics to publish
 //Garage door 1 state
