@@ -40,7 +40,7 @@ static const uint8_t GARAGE_DOOR_CLOSING_STATE=3;
 
 static const uint16 GARAGE_DOOR_OPENING_TIME_MILLIS=5000;
 static const uint16 GARAGE_DOOR_CLOSING_TIME_MILLIS=30000;
-static const uint16 RELAY_ACTIVATION_MILLIS=2000;
+static const uint16 RELAY_ACTIVATION_MILLIS=200;
 static const unsigned long MAX_PUBLISH_DELAY = 100000;
 
 //flag for saving data
@@ -296,8 +296,11 @@ void resetRelay(uint8_t garage_door_state, unsigned long millis_since_last_comma
   bool is_door_opening_moving = (garage_door_state == GARAGE_DOOR_OPENING_STATE || garage_door_state == GARAGE_DOOR_CLOSING_STATE);
   bool is_relay_activation_in_progress = millis_since_last_command<RELAY_ACTIVATION_MILLIS;
   if(is_door_opening_moving && !is_relay_activation_in_progress){
-    Serial.println("Stopping relay activation");
     digitalWrite(pin,1);
+  }else if (is_door_opening_moving){
+    Serial.print("Relay is active for ");
+    Serial.print(millis_since_last_command);
+    Serial.println(" millis");
   }
 }
 
