@@ -24,8 +24,8 @@ const char* garage_door_1_command_topic;
 const char* garage_door_2_command_topic;
 const char* reset_topic;
 
-static const uint8_t GARAGE_DOOR_1_COMMAND_PIN=D3;
-static const uint8_t GARAGE_DOOR_2_COMMAND_PIN=D4;
+static const uint8_t GARAGE_DOOR_1_COMMAND_PIN=D5;
+static const uint8_t GARAGE_DOOR_2_COMMAND_PIN=D6;
 
 static const uint8_t GARAGE_DOOR_1_SENDOR_PIN=D1;
 static const uint8_t GARAGE_DOOR_2_SENDOR_PIN=D2;
