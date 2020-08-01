@@ -40,6 +40,7 @@ static const uint8_t GARAGE_DOOR_CLOSING_STATE=3;
 static const uint16 GARAGE_DOOR_OPENING_TIME_MILLIS=5000;
 static const uint16 GARAGE_DOOR_CLOSING_TIME_MILLIS=30000;
 static const uint16 RELAY_ACTIVATION_MILLIS=1000;
+static const unsigned long MAX_PUBLISH_DELAY = 100000;
 
 //flag for saving data
 bool shouldSaveConfig = false;
@@ -50,8 +51,10 @@ PubSubClient mqtt_client(esp_wifi_client);
 uint8_t garage_door_1_state = 0;
 uint8_t garage_door_2_state = 0;
 
-uint8_t garage_door_1_ideal_state = 0;
-uint8_t garage_door_2_ideal_state = 0;
+unsigned long last_published_millis = 0;
+
+uint8_t garage_door_1_last_published_value = 0;
+uint8_t garage_door_2_last_published_value = 0;
 
 unsigned long garage_door_1_last_command_millis = 0;
 unsigned long garage_door_2_last_command_millis = 0;
@@ -318,14 +321,19 @@ void loop() {
   uint8_t current_garage_door_1_state = digitalRead(GARAGE_DOOR_1_SENDOR_PIN);
   uint8_t current_garage_door_2_state = digitalRead(GARAGE_DOOR_2_SENDOR_PIN);
   uint8_t new_garage_door_1_state = getNewGarageDoorState(garage_door_1_state, current_garage_door_1_state, millis_since_garage_door_1_command);
-  if(garage_door_1_state != new_garage_door_1_state){
-    Serial.printf("door 1 %d %d %d",garage_door_1_state, new_garage_door_1_state, millis_since_garage_door_1_command);
+  if(garage_door_1_state != new_garage_door_1_state  || garage_door_1_last_published_value != new_garage_door_1_state || now-last_published_millis > MAX_PUBLISH_DELAY){
     garage_door_1_state = new_garage_door_1_state;
     mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
+    garage_door_1_last_published_value = garage_door_1_state;
   }
   uint8_t new_garage_door_2_state = getNewGarageDoorState(garage_door_2_state, current_garage_door_2_state, millis_since_garage_door_2_command);
-  if(garage_door_2_state != new_garage_door_2_state){
+  if(garage_door_2_state != new_garage_door_2_state || garage_door_2_last_published_value != new_garage_door_2_state || now-last_published_millis > MAX_PUBLISH_DELAY){
     garage_door_2_state = new_garage_door_2_state;
-    mqtt_client.publish(garage_door_2_state_topic, String(current_garage_door_2_state).c_str());
+    mqtt_client.publish(garage_door_2_state_topic, String(garage_door_2_state).c_str());
+    garage_door_2_last_published_value = garage_door_2_state;
+  }
+
+  if(now-last_published_millis > MAX_PUBLISH_DELAY){
+    last_published_millis = now;
   }
 }
