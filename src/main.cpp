@@ -308,17 +308,18 @@ uint8_t getNewGarageDoorState(uint8_t previous_garage_door_state, uint8_t curren
 }
 
 void loop() {
+  mqtt_loop();
   unsigned long now = millis();
   unsigned long millis_since_garage_door_1_command = now-garage_door_1_last_command_millis;
   unsigned long millis_since_garage_door_2_command = now-garage_door_2_last_command_millis;
   resetRelay(garage_door_1_state,millis_since_garage_door_1_command,GARAGE_DOOR_1_COMMAND_PIN);
   resetRelay(garage_door_2_state,millis_since_garage_door_2_command,GARAGE_DOOR_2_COMMAND_PIN);
-  mqtt_loop();
   //sensors return 1 if open 0 if closed
   uint8_t current_garage_door_1_state = digitalRead(GARAGE_DOOR_1_SENDOR_PIN);
   uint8_t current_garage_door_2_state = digitalRead(GARAGE_DOOR_2_SENDOR_PIN);
   uint8_t new_garage_door_1_state = getNewGarageDoorState(garage_door_1_state, current_garage_door_1_state, millis_since_garage_door_1_command);
   if(garage_door_1_state != new_garage_door_1_state){
+    Serial.printf("door 1 %d %d %d",garage_door_1_state, new_garage_door_1_state, millis_since_garage_door_1_command);
     garage_door_1_state = new_garage_door_1_state;
     mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
   }
