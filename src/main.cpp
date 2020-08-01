@@ -71,8 +71,6 @@ void setupGIPO(){
 }
 
 uint8_t checkCommandForNewActions(uint8_t new_ideal_state, uint8_t garage_door_state, uint8_t pin){
-  Serial.printf("%d ideal state %d garage door state", new_ideal_state, garage_door_state);
-
   if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_state == GARAGE_DOOR_CLOSE_STATE) {
     Serial.println("Opening garage door");
     digitalWrite(pin,0);
@@ -321,12 +319,12 @@ void loop() {
   uint8_t current_garage_door_2_state = digitalRead(GARAGE_DOOR_2_SENDOR_PIN);
   uint8_t new_garage_door_1_state = getNewGarageDoorState(garage_door_1_state, current_garage_door_1_state, millis_since_garage_door_1_command);
   if(garage_door_1_state != new_garage_door_1_state){
-    mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
     garage_door_1_state = new_garage_door_1_state;
+    mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
   }
   uint8_t new_garage_door_2_state = getNewGarageDoorState(garage_door_2_state, current_garage_door_2_state, millis_since_garage_door_2_command);
   if(garage_door_2_state != new_garage_door_2_state){
-    mqtt_client.publish(garage_door_2_state_topic, String(current_garage_door_2_state).c_str());
     garage_door_2_state = new_garage_door_2_state;
+    mqtt_client.publish(garage_door_2_state_topic, String(current_garage_door_2_state).c_str());
   }
 }
