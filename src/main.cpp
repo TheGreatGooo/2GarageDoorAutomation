@@ -40,7 +40,7 @@ static const uint8_t GARAGE_DOOR_CLOSING_STATE=3;
 
 static const uint16 GARAGE_DOOR_OPENING_TIME_MILLIS=5000;
 static const uint16 GARAGE_DOOR_CLOSING_TIME_MILLIS=30000;
-static const uint16 RELAY_ACTIVATION_MILLIS=1000;
+static const uint16 RELAY_ACTIVATION_MILLIS=2000;
 static const unsigned long MAX_PUBLISH_DELAY = 100000;
 
 //flag for saving data
