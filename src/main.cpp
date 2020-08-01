@@ -61,22 +61,6 @@ void saveConfigCallback () {
   shouldSaveConfig = true;
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.println();
-  setupGIPO();
-
-  //clean FS, for testing
-  //SPIFFS.format();
-  Serial.println("Reading congfig from FileSystem");
-  readConfigsFromFileSystem();
-  Serial.println("Setting up Wifi");
-  setupWiFi();
-  Serial.println("Setting up MQTT Client");
-  initializeMQTTClient();
-}
-
 void setupGIPO(){
   pinMode(GARAGE_DOOR_1_COMMAND_PIN,OUTPUT);
   pinMode(GARAGE_DOOR_2_COMMAND_PIN,OUTPUT);
@@ -84,6 +68,34 @@ void setupGIPO(){
   pinMode(GARAGE_DOOR_2_SENDOR_PIN,INPUT_PULLUP);
   digitalWrite(GARAGE_DOOR_1_COMMAND_PIN,1);
   digitalWrite(GARAGE_DOOR_2_COMMAND_PIN,1);
+}
+
+uint8_t checkCommandForNewActions(uint8_t new_ideal_state, uint8_t garage_door_state, uint8_t pin){
+  if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_state == GARAGE_DOOR_CLOSE_STATE) {
+    digitalWrite(pin,0);
+    return GARAGE_DOOR_OPENING_STATE;
+  }
+  return garage_door_state;
+}
+
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.println("] ");
+  
+  if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
+    uint8_t new_ideal_state = '0'-payload[0];
+    if(strcmp(topic, garage_door_1_command_topic) == 0) {
+      garage_door_1_state = checkCommandForNewActions(new_ideal_state,garage_door_1_state,GARAGE_DOOR_1_COMMAND_PIN);
+    }
+    if(strcmp(topic, garage_door_2_command_topic) == 0) {
+      garage_door_2_state = checkCommandForNewActions(new_ideal_state,garage_door_2_state,GARAGE_DOOR_2_COMMAND_PIN);
+    }
+  } else
+  {
+    Serial.println("Got unexpected message on mqtt topic");
+  }
+
 }
 
 void initializeMQTTClient() {
@@ -211,6 +223,22 @@ void readConfigsFromFileSystem() {
   }
 }
 
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.println();
+  setupGIPO();
+
+  //clean FS, for testing
+  //SPIFFS.format();
+  Serial.println("Reading congfig from FileSystem");
+  readConfigsFromFileSystem();
+  Serial.println("Setting up Wifi");
+  setupWiFi();
+  Serial.println("Setting up MQTT Client");
+  initializeMQTTClient();
+}
+
 void reconnect() {
   // Loop until we're reconnected
   while (!mqtt_client.connected()) {
@@ -240,28 +268,6 @@ void mqtt_loop() {
   mqtt_client.loop();
 }
 
-void loop() {
-  unsigned long now = millis();
-  unsigned long millis_since_garage_door_1_command = now-garage_door_1_last_command_millis;
-  unsigned long millis_since_garage_door_2_command = now-garage_door_2_last_command_millis;
-  resetRelay(garage_door_1_state,millis_since_garage_door_1_command,GARAGE_DOOR_1_COMMAND_PIN);
-  resetRelay(garage_door_2_state,millis_since_garage_door_2_command,GARAGE_DOOR_2_COMMAND_PIN);
-  mqtt_loop();
-  //sensors return 1 if open 0 if closed
-  uint8_t current_garage_door_1_state = digitalRead(GARAGE_DOOR_1_SENDOR_PIN);
-  uint8_t current_garage_door_2_state = digitalRead(GARAGE_DOOR_2_SENDOR_PIN);
-  uint8_t new_garage_door_1_state = getNewGarageDoorState(garage_door_1_state, current_garage_door_1_state, millis_since_garage_door_1_command);
-  if(garage_door_1_state != new_garage_door_1_state){
-    mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
-    garage_door_1_state = new_garage_door_1_state;
-  }
-  uint8_t new_garage_door_2_state = getNewGarageDoorState(garage_door_2_state, current_garage_door_2_state, millis_since_garage_door_2_command);
-  if(garage_door_2_state != new_garage_door_2_state){
-    mqtt_client.publish(garage_door_2_state_topic, String(current_garage_door_2_state).c_str());
-    garage_door_2_state = new_garage_door_2_state;
-  }
-}
-
 void resetRelay(uint8_t garage_door_state, unsigned long millis_since_last_command, uint8_t pin){
   bool is_door_opening_closing = (garage_door_state == GARAGE_DOOR_OPENING_STATE || garage_door_state == GARAGE_DOOR_CLOSING_STATE);
   bool is_relay_activation_in_progress = millis_since_last_command<RELAY_ACTIVATION_MILLIS;
@@ -287,30 +293,24 @@ uint8_t getNewGarageDoorState(uint8_t previous_garage_door_state, uint8_t curren
   return previous_garage_door_state;
 }
 
-void mqtt_callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.println("] ");
-  
-  if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
-    uint8_t new_ideal_state = '0'-payload[0];
-    if(strcmp(topic, garage_door_1_command_topic) == 0) {
-      garage_door_1_state = checkCommandForNewActions(new_ideal_state,garage_door_1_state,GARAGE_DOOR_1_COMMAND_PIN);
-    }
-    if(strcmp(topic, garage_door_2_command_topic) == 0) {
-      garage_door_2_state = checkCommandForNewActions(new_ideal_state,garage_door_2_state,GARAGE_DOOR_2_COMMAND_PIN);
-    }
-  } else
-  {
-    Serial.println("Got unexpected message on mqtt topic");
+void loop() {
+  unsigned long now = millis();
+  unsigned long millis_since_garage_door_1_command = now-garage_door_1_last_command_millis;
+  unsigned long millis_since_garage_door_2_command = now-garage_door_2_last_command_millis;
+  resetRelay(garage_door_1_state,millis_since_garage_door_1_command,GARAGE_DOOR_1_COMMAND_PIN);
+  resetRelay(garage_door_2_state,millis_since_garage_door_2_command,GARAGE_DOOR_2_COMMAND_PIN);
+  mqtt_loop();
+  //sensors return 1 if open 0 if closed
+  uint8_t current_garage_door_1_state = digitalRead(GARAGE_DOOR_1_SENDOR_PIN);
+  uint8_t current_garage_door_2_state = digitalRead(GARAGE_DOOR_2_SENDOR_PIN);
+  uint8_t new_garage_door_1_state = getNewGarageDoorState(garage_door_1_state, current_garage_door_1_state, millis_since_garage_door_1_command);
+  if(garage_door_1_state != new_garage_door_1_state){
+    mqtt_client.publish(garage_door_1_state_topic, String(garage_door_1_state).c_str());
+    garage_door_1_state = new_garage_door_1_state;
   }
-
-}
-
-uint8_t checkCommandForNewActions(uint8_t new_ideal_state, uint8_t garage_door_state, uint8_t pin){
-  if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_state == GARAGE_DOOR_CLOSE_STATE) {
-    digitalWrite(pin,0);
-    return GARAGE_DOOR_OPENING_STATE;
+  uint8_t new_garage_door_2_state = getNewGarageDoorState(garage_door_2_state, current_garage_door_2_state, millis_since_garage_door_2_command);
+  if(garage_door_2_state != new_garage_door_2_state){
+    mqtt_client.publish(garage_door_2_state_topic, String(current_garage_door_2_state).c_str());
+    garage_door_2_state = new_garage_door_2_state;
   }
-  return garage_door_state;
 }
