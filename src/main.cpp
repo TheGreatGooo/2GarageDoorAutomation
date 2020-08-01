@@ -291,17 +291,26 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.println("] ");
-  if(strcmp(topic, garage_door_1_command_topic) == 0) {
-    if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
-      int new_ideal_state = '0'-payload[0];
-      if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_1_state == GARAGE_DOOR_CLOSE_STATE) {
-        digitalWrite(GARAGE_DOOR_1_COMMAND_PIN,0);
-        garage_door_1_state = GARAGE_DOOR_OPENING_STATE;
-      }
-    } else
-    {
-      Serial.println("Got unexpected message on mqtt topic");
+  
+  if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
+    int new_ideal_state = '0'-payload[0];
+    if(strcmp(topic, garage_door_1_command_topic) == 0) {
+      garage_door_1_state = checkCommandForNewActions(new_ideal_state,garage_door_1_state,GARAGE_DOOR_1_COMMAND_PIN);
     }
-    
+    if(strcmp(topic, garage_door_2_command_topic) == 0) {
+      garage_door_2_state = checkCommandForNewActions(new_ideal_state,garage_door_2_state,GARAGE_DOOR_2_COMMAND_PIN);
+    }
+  } else
+  {
+    Serial.println("Got unexpected message on mqtt topic");
   }
+
+}
+
+uint8_t checkCommandForNewActions(uint8_t new_ideal_state, uint8_t garage_door_state, uint8_t pin){
+  if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_state == GARAGE_DOOR_CLOSE_STATE) {
+    digitalWrite(pin,0);
+    return GARAGE_DOOR_OPENING_STATE;
+  }
+  return garage_door_state;
 }
