@@ -71,9 +71,17 @@ void setupGIPO(){
 }
 
 uint8_t checkCommandForNewActions(uint8_t new_ideal_state, uint8_t garage_door_state, uint8_t pin){
+  Serial.printf("%d ideal state %d garage door state", new_ideal_state, garage_door_state);
+
   if(new_ideal_state == GARAGE_DOOR_OPEN_COMMAND && garage_door_state == GARAGE_DOOR_CLOSE_STATE) {
+    Serial.println("Opening garage door");
     digitalWrite(pin,0);
     return GARAGE_DOOR_OPENING_STATE;
+  }
+  if(new_ideal_state == GARAGE_DOOR_CLOSE_COMMAND && garage_door_state == GARAGE_DOOR_OPEN_STATE) {
+    Serial.println("Closing garage door");
+    digitalWrite(pin,0);
+    return GARAGE_DOOR_CLOSING_STATE;
   }
   return garage_door_state;
 }
@@ -84,12 +92,19 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("] ");
   
   if(length == 1 && (payload[0] == '0' || payload[0] == '1')){
-    uint8_t new_ideal_state = '0'-payload[0];
+    uint8_t new_ideal_state = payload[0]-'0';
     if(strcmp(topic, garage_door_1_command_topic) == 0) {
-      garage_door_1_state = checkCommandForNewActions(new_ideal_state,garage_door_1_state,GARAGE_DOOR_1_COMMAND_PIN);
-    }
-    if(strcmp(topic, garage_door_2_command_topic) == 0) {
-      garage_door_2_state = checkCommandForNewActions(new_ideal_state,garage_door_2_state,GARAGE_DOOR_2_COMMAND_PIN);
+      uint8_t new_state = checkCommandForNewActions(new_ideal_state,garage_door_1_state,GARAGE_DOOR_1_COMMAND_PIN);
+      if(new_state != garage_door_1_state){
+        garage_door_1_last_command_millis = millis();
+        garage_door_1_state = new_state;
+      }
+    }else if(strcmp(topic, garage_door_2_command_topic) == 0) {
+      uint8_t new_state = checkCommandForNewActions(new_ideal_state,garage_door_2_state,GARAGE_DOOR_2_COMMAND_PIN);
+      if(new_state != garage_door_2_state){
+        garage_door_2_last_command_millis = millis();
+        garage_door_2_state = new_state;
+      }
     }
   } else
   {
@@ -269,9 +284,10 @@ void mqtt_loop() {
 }
 
 void resetRelay(uint8_t garage_door_state, unsigned long millis_since_last_command, uint8_t pin){
-  bool is_door_opening_closing = (garage_door_state == GARAGE_DOOR_OPENING_STATE || garage_door_state == GARAGE_DOOR_CLOSING_STATE);
+  bool is_door_opening_moving = (garage_door_state == GARAGE_DOOR_OPENING_STATE || garage_door_state == GARAGE_DOOR_CLOSING_STATE);
   bool is_relay_activation_in_progress = millis_since_last_command<RELAY_ACTIVATION_MILLIS;
-  if(is_door_opening_closing && !is_relay_activation_in_progress){
+  if(is_door_opening_moving && !is_relay_activation_in_progress){
+    Serial.println("Stopping relay activation");
     digitalWrite(pin,1);
   }
 }
