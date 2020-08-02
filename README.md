@@ -22,6 +22,17 @@
     - Relay 2 common --> Speaker wire 4 (+)
     - Relay 2 NO     --> Speaker wire 4 (-)
   
+  ### Setup
+  - Connect to Accesspoint called GarageDoorAutomation
+  - Choose and enter credentials to your wireless network
+  - Enter the location of your mqtt broker ( i recommend the one that is integrated with OpenHab)
+  
+  ### MQTT topics
+  - /GarageDoorAutomation/garage_door_1/state --> will be messaged with 1 = door open , 0 = door close, 2 = door opening, 3 = door closing
+  - /GarageDoorAutomation/garage_door_2/state --> samge as above but for door 2
+  - /GarageDoorAutomation/garage_door_1/command --> send a 1 to indicate that you want to open the garage door, 0 to close it
+  - /GarageDoorAutomation/garage_door_2/command --> samge as above but for door 3
+  
 ![Case setup](images/garage_door_cutaway.png)
 ![3d printed case](images/3d_printed_case.png)
 ![garage door opener](images/garage_door_opener.png)
