@@ -25,5 +25,5 @@
 ![Case setup](images/garage_door_cutaway.png)
 ![3d printed case](images/3d_printed_case.png)
 ![garage door opener](images/garage_door_opener.png)
-![garage door sensor](images/garage_door_sendor.JPG)
+![garage door sensor](images/garage_door_sensor.JPG)
 ![mounted case in garage](images/mounted_case_in_garage.png)
