@@ -8,12 +8,12 @@
   - [3d printed case](https://www.thingiverse.com/thing:1867799)
   
   ### Pins
-  NodeMCU v3
-  D5 --> IN1 on relay module
-  D6 --> IN2 on relay module
-  D1 --> Speaker wire 1 (+)
-  D2 --> Speaker wire 2 (+)
-  3v --> relay module vcc
-  GND --> Speaker wire 1/2 (-) & GND on relay module
-  VV --> if using 5v relays connect to JD-VCC on relay module
+  #### NodeMCU v3
+    - D5 --> IN1 on relay module
+    - D6 --> IN2 on relay module
+    - D1 --> Speaker wire 1 (+)
+    - D2 --> Speaker wire 2 (+)
+    - 3v --> relay module vcc
+    - GND --> Speaker wire 1/2 (-) & GND on relay module
+    - VV --> if using 5v relays connect to JD-VCC on relay module
   
