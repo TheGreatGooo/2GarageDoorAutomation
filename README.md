@@ -16,5 +16,14 @@
     - 3v --> relay module vcc
     - GND --> Speaker wire 1/2 (-) & GND on relay module
     - VV --> if using 5v relays connect to JD-VCC on relay module
+   #### Relay Module
+    - Relay 1 common --> Speaker wire 3 (+)
+    - Relay 1 NO     --> Speaker wire 3 (-)
+    - Relay 2 common --> Speaker wire 4 (+)
+    - Relay 2 NO     --> Speaker wire 4 (-)
   
 ![Case setup](images/garage_door_cutaway.png)
+![3d printed case](images/3d_printed_case.png)
+![garage door opener](images/garage_door_opener.png)
+![garage door sensor](images/garage_door_sendor.JPG)
+![mounted case in garage](images/mounted_case_in_garage.png)
