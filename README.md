@@ -17,3 +17,4 @@
     - GND --> Speaker wire 1/2 (-) & GND on relay module
     - VV --> if using 5v relays connect to JD-VCC on relay module
   
+![Case setup](images/garage_door_cutaway.png)
